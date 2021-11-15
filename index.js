@@ -7,6 +7,10 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 app.use(cors());
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 app.get("/api", (req, res) => {
     res.json({ message: "Hello from server!" });
   });
