@@ -19,7 +19,7 @@ app.get("/api", (req, res) => {
     let y = false;
     const username = req.query.username;
     const password = req.query.password;
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({"args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
     const page = await browser.newPage();
     await page.setRequestInterception(true);
   
