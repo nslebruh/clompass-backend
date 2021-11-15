@@ -11,7 +11,7 @@ app.get("/api", (req, res) => {
     res.json({ message: "Hello from server!" });
   });
 
-app.get("/puppeteer", (req, res) => {
+app.get("/puppeteer",  async (req, res) => {
     let browser = await puppeteer.launch({args: ["--no-sandbox", "--disable-setuid-sandbox"]})
     let page = await browser.newPage();
     let example = await page.goto("https://example.com");
