@@ -19,6 +19,7 @@
   "homepage": "https://github.com/nslebruh/clompass-backend#readme",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "puppeteer": "^11.0.0"
   }
 }
