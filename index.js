@@ -12,15 +12,11 @@ app.get("/api", (req, res) => {
   });
 
 app.get("/puppeteer", (req, res) => {
-    (async () => {
-        page = await (await browserP).newPage();
-        await page.setContent(`<p>web running at ${Date()}</p>`);
-        res.send(await page.content());
-      })()
-        .catch(err => res.sendStatus(500))
-        .finally(async () => await page.close())
-      ;
-    });
+    let browser = await puppeteer.launch({args: ["--no-sandbox", "--disable-setuid-sandbox"]})
+    let page = await browser.newPage();
+    let example = await page.goto("https://example.com");
+    res.send(await example.content);
+})
 
   app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
