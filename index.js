@@ -125,7 +125,7 @@ app.get("/api", (req, res) => {
   
     console.log("collecting learning tasks information");
     await page.evaluate(async () => {
-      document.querySelector("#ext-gen1722").click();
+      document.querySelector("#ext-gen1724").click();
       document.querySelector("li.x-boundlist-item:nth-child(7)").click();
     });
     while (true) {
