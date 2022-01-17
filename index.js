@@ -55,7 +55,7 @@ app.get("/api", (req, res) => {
     const response = {profile: {}, learning_tasks: []}
     const username = req.query.username;
     const password = req.query.password;
-    const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
+    const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
     const page = await browser.newPage();
     await page.setRequestInterception(true);
   
