@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require('cors');
 const puppeteer = require("puppeteer");
 const dates = require("./dates.json");
-const subjects = require("./subjects.json");
+const week_a = require("./response week a.json");
 
 const PORT = process.env.PORT || 3001;
 
@@ -13,13 +13,47 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function getStudentLearningTasks(student, browser) {
+
+}
+async function getStudentInfo(student, browser) {
+
+}
+async function updateStudentSchedule(student, browser) {
+
+}
 app.get("/api", (req, res) => {
     res.json({ message: "Hello from server!" });
   });
 
   app.get("/puppeteer", async (req, res) => {
-    if (!req.query.username && !req.query.password) {res.send(400, "Username and password are required")};
-    const response = {learning_tasks: [], profile: {}, schedule: {"a" : {}, "b" : {}}};
+    if (!req.query.username || !req.query.password) {res.send(400, "nah chief this ain't it")};
+    const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
+    const response = {};
+    try {
+      const page = await browser.newPage();
+    } catch (error) {
+      console.log(error)
+    }
+
+    if (!response.query.LearningTasks && !response.query.StudentInfo && !UpdateSchedule) {
+      res.send(400, "nah chief this ain't it");
+    }
+
+    if (response.query.LearningTasks === true) {
+      response.LearningTasks = await getStudentLearningTasks(browser);
+    }
+
+    if (response.query.StudentInfo === true) {
+      response.StudentInfo = await getStudentInfo(browser);
+    }
+    if (response.query.UpdateSchedule === true) {
+      response.UpdateSchedule = await updateStudentSchedule(browser);
+    }
+
+
+
+
     let id = 0;
     let x = 0;
     let y = false;
@@ -27,7 +61,7 @@ app.get("/api", (req, res) => {
     let a = false;
     const username = req.query.username;
     const password = req.query.password;
-    const browser = await puppeteer.launch({"args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
+    const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
     const page = await browser.newPage();
     await page.setRequestInterception(true);
   
@@ -91,12 +125,6 @@ app.get("/api", (req, res) => {
             y = true;
             }
         }
-        if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetNamesById?sessionstate=readonly&_dc=1637544149780")) {
-
-        }
-        if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/Calendar.svc/GetCalendarEventsByUser?sessionstate=readonly&includeEvents=true&includeAllPd=true&includeExams=true&includeVolunteeringEvent=true&_dc=1637624948674")) {
-
-        }
     });
   
     console.log("navigating to compass login page")
@@ -124,32 +152,130 @@ app.get("/api", (req, res) => {
     await page.waitForSelector('.x-grid-table');
   
     console.log("collecting learning tasks information");
-    await page.evaluate(async () => {
-      document.querySelector("#ext-gen1722").click();
-      document.querySelector("li.x-boundlist-item:nth-child(7)").click();
-    });
-    while (true) {
-      console.log("still waiting");
-      if (y) {
-        if (z) {
-          if (a) {
-            break
-          } else {
-            await sleep(250)
-          }
-        } else {
-          await sleep(250)
-        }
-      } else {
-        await sleep(250)
-      }
-      await sleep(250);
+    await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
+    await page.$$eval(".x-boundlist-item", el => {el[6].click()})
+
+    while (!y) {
+      await sleep(250)
+      console.log("waiting for learning tasks to load");
     }
+    
+    const page2 = await browser.newPage();
+    await page2.setRequestInterception(true);
+    page2.on("request", async (request) => {
+      await request.continue();
+    });
+    page2.on("requestfinished", async (request) => {
+      if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/User.svc/GetUserDetailsBlobByUserId")) {
+        let responsebody = await request.response().json();
+        responsebody = responsebody.d;
+        response.profile.square_img_link = "https://lilydaleheights-vic.compass.education/" + responsebody.userSquarePhotoPath;
+        response.profile.img_link = "https://lilydaleheights-vic.compass.education/" + responsebody.userPhotoPath;
+        response.profile.display_code = responsebody.userDisplayCode;
+        response.profile.email = responsebody.userEmail;
+        response.profile.form_group = responsebody.userFormGroup;
+        response.profile.full_name = responsebody.userFullName;
+        response.profile.house = responsebody.userHouse;
+        response.profile.prefered_name = responsebody.userPreferredName;
+        response.profile.year_level = responsebody.userYearLevel;
+        response.profile.user_id = responsebody.userId;
+        response.profile.year_level_num = responsebody.userYearLevelId
+        console.log("done user details");
+        z = true;
+      }
+    })
+    await page2.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#dsh");
+    while (!z) {
+      await sleep(250)
+      console.log("waiting for user details to load");
+    }
+    console.log("bruh")
+    let responsebody = week_a.d;
+    let codes = [];
+    let updates = {};
+    let ids = [0, 35371, 34934, 35496];
+    for (i = 0; i < responsebody.length; i++) {
+      let code = responsebody[i].title;
+      let room = responsebody[i].longTitleWithoutTime.split(" - ")[2]
+      let period = responsebody[i].longTitleWithoutTime[0];
+      let date = new Date(responsebody[i].start).toLocaleDateString("en-GB", { year: "numeric", month: "2-digit", day: "2-digit" })
+      let week;
+      let day;
+      let activity_code = responsebody[i].activityId;
+      if (codes.includes(code) === false) {
+        if (ids.includes(activity_code) === false) {
+          if (updates[code] === undefined) {
+            updates[code] = [];
+          }
+        }
+      }
+      console.log(updates);
+
+      //for (i = 0; i < dates.length; i++) {
+      //  console.log(i)
+      //  for (let j = 0; j < dates[i].length; j++) {
+      //    if (dates[i][j].includes(date)) {
+      //      week = Object.keys(dates[i])
+      //      day = Object.keys(dates[i][j])
+      //    }
+      //  }
+      //}
+      //updates[code].push({week: week, day: day, period: period, room: room})
+    }
+    //const page3 = await browser.newPage();
+    //await page3.setRequestInterception(true);
+    //page3.on("request", async (request) => {
+    //  await request.continue();
+    //});
+    //page3.on("requestfinished", async (request) => {
+    //  if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/Calendar.svc/GetCalendarEventsByUser")) {
+    //      let responsebody = await request.response().json();
+    //      let codes = [];
+    //      let ids = [0, 35371, 34934, 35496];
+    //      responsebody = responsebody.d;
+    //      for (let i = 0; i < responsebody.length; i++) {
+    //        let code = responsebody[i].title;
+    //        let activity_code = responsebody[i].activityId;
+    //        if (codes.includes(code) === false) {
+    //          if (ids.includes(activity_code) === false) {
+    //            codes.push(code)
+    //          }
+    //        }
+    //      }
+    //        console.log(codes)
+    //        for (i = 0; i < codes.length; i++) {
+    //          let result = await subjects.find({code: codes[i]}).toArray();
+    //          console.log(result)
+    //          if (result === []) {
+    //            let updates = [];
+    //            for (i = 0; i < responsebody.length; i++) {
+    //              if (responsebody[i].title === codes[i]) {
+    //                let period = responsebody[i].title[0];
+    //                let date = new Date(responsebody[i].start).toLocaleDateString("en-GB", { year: "numeric", month: "2-digit", day: "2-digit" })
+    //                let room = responsebody[i].longTitleWithoutTime.split(" ");
+    //                console.log(room)
+    //              }
+    //            }
+    //          }
+    //        }
+    //    console.log("Schedule done")
+    //    a = true;
+    //  }
+    //})
+    //await page3.goto("https://lilydaleheights-vic.compass.education/Organise/Calendar/")
+    ////page3.evaluate(async () => {
+    ////  await document.querySelector("#calendar-manager-tb-prev").click();
+    ////})
+    //while (!a) {
+    //  await sleep(250);
+    //  console.log("Waiting for schedule to load")
+    //}
+
     res.json(response);
     await browser.close();
   });
   app.get('*', (req, res) => {
-    res.send("nah")
+    res.status(400).send("nah")
   });
   app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
