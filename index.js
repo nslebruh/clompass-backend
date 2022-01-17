@@ -27,38 +27,32 @@ app.get("/api", (req, res) => {
   });
 
   app.get("/puppeteer", async (req, res) => {
-    if (!req.query.username || !req.query.password) {res.send(400, "nah chief this ain't it")};
-    const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
-    const response = {};
-    try {
-      const page = await browser.newPage();
-    } catch (error) {
-      console.log(error)
-    }
-
-    if (!response.query.LearningTasks && !response.query.StudentInfo && !UpdateSchedule) {
-      res.send(400, "nah chief this ain't it");
-    }
-
-    if (response.query.LearningTasks === true) {
-      response.LearningTasks = await getStudentLearningTasks(browser);
-    }
-
-    if (response.query.StudentInfo === true) {
-      response.StudentInfo = await getStudentInfo(browser);
-    }
-    if (response.query.UpdateSchedule === true) {
-      response.UpdateSchedule = await updateStudentSchedule(browser);
-    }
-
-
-
-
+    //if (!req.query.username || !req.query.password) {res.send(400, "nah chief this ain't it")};
+    //const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
+    //const response = {};
+    //try {
+    //  const page = await browser.newPage();
+    //} catch (error) {
+    //  console.log(error)
+    //}
+    //if (!response.query.LearningTasks && !response.query.StudentInfo && !UpdateSchedule) {
+    //  res.send(400, "nah chief this ain't it");
+    //}
+    //if (response.query.LearningTasks === true) {
+    //  response.LearningTasks = await getStudentLearningTasks(browser);
+    //}
+    //if (response.query.StudentInfo === true) {
+    //  response.StudentInfo = await getStudentInfo(browser);
+    //}
+    //if (response.query.UpdateSchedule === true) {
+    //  response.UpdateSchedule = await updateStudentSchedule(browser);
+    //}
     let id = 0;
     let x = 0;
     let y = false;
     let z = false;
     let a = false;
+    const response = {profile: {}, learning_tasks: []}
     const username = req.query.username;
     const password = req.query.password;
     const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]});
@@ -72,7 +66,7 @@ app.get("/api", (req, res) => {
     page.on("requestfinished", async (request) => {
         if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
             x += 1;
-            if (x === 2) {
+            if (x === 3) {
               let responsebody = await request.response().json();
               responsebody = responsebody.d.data;
               for (let i = 0; i < responsebody.length; i++) {
@@ -153,7 +147,16 @@ app.get("/api", (req, res) => {
   
     console.log("collecting learning tasks information");
     await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
-    await page.$$eval(".x-boundlist-item", el => {el[6].click()})
+    await page.waitForSelector(".x-boundlist-item");
+    await page.$$eval(".x-boundlist-item", el => el[6].click())
+    await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
+    await page.$$eval(".x-boundlist-item", el => {
+      el.forEach(ele => {
+        if (ele.textContent === "2021 Academic") {
+          ele.click();
+        } 
+      });
+    })
 
     while (!y) {
       await sleep(250)
