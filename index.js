@@ -151,12 +151,12 @@ app.get("/api", (req, res) => {
     await page.$$eval(".x-boundlist-item", el => el[6].click())
     await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
     await page.$$eval(".x-boundlist-item", el => {
-      el.forEach(ele => {
-        if (ele.textContent === "2021 Academic") {
-          ele.click();
-        } 
+      el.forEach(element => {
+        if (element.innerText === "2021 Academic") {
+          element.click();
+        }
       });
-    })
+    });
 
     while (!y) {
       await sleep(250)
