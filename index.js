@@ -75,10 +75,6 @@ const getLearningTasksData = async (browser, years) => {
   let total_requests = 0;
   let id = 0;
   let total_tasks_requests = 0;
-  console.log(years.length)
-  for (i=0; i<years.length; i++) {
-    console.log(typeof(years[i]))
-  }
 
   let page = await browser.newPage();
   await page.setRequestInterception(true);
@@ -89,6 +85,8 @@ const getLearningTasksData = async (browser, years) => {
   });
   page.on("requestfinished", async (request) => {
       if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
+        console.log("request finished")
+        console.log(total_requests)
           total_requests++;
           if (total_requests > 2) {
               let responsebody = await request.response().json();
