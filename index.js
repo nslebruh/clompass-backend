@@ -18,7 +18,7 @@ function sleep(ms) {
 const login = async (username, password) => {
   const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   let page = await browser.newPage(); 
-  await page.goto('https://lilydaleheights-vic.compass.education/');
+  await page.goto('https://lilydaleheights-vic.compass.education/', {waitUntil: "load", timeout: 0});
   await page.waitForSelector("#username", timeout=2000);
   console.log("page loaded")
   await page.$$eval("#username", (el, username) => {
@@ -35,6 +35,7 @@ const login = async (username, password) => {
     el.click();
   });
   await page.waitForSelector(".ext-cal-day-col-gutter");
+  console.log("page loaded")
   return browser;
 }
 const getStudentInfoData = async (browser) => {
@@ -62,7 +63,7 @@ const getStudentInfoData = async (browser) => {
           done = true;
       }
   })
-  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#dsh")
+  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#dsh", {waitUntil: "load", timeout: 0})
   while (!done) {
       console.log("info collection not done")
       await sleep(1000)
@@ -144,8 +145,9 @@ const getLearningTasksData = async (browser, years) => {
       }
   })
 
-  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks");
-  await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
+  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks", {waitUntil: "load", timeout: 0});
+  //await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
+  console.log("page loaded")
   console.log("collecting learning tasks information");
   await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
   await page.waitForSelector(".x-boundlist-item");
@@ -158,6 +160,7 @@ const getLearningTasksData = async (browser, years) => {
           }
       }
   })
+  console.log("clicking 500 button")
   await sleep(1000);
 
   
@@ -167,6 +170,7 @@ const getLearningTasksData = async (browser, years) => {
           await sleep(1000)
       }
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
+      console.log("clicking year button")
       let year = years[total_years];
       data[year] = [];
       await page.evaluate(year => {
@@ -193,7 +197,7 @@ app.get("/api", (req, res) => {
 
 app.get("/puppeteer", async (req, res) => {
   if (!req.query.username || !req.query.password || !req.query.learning_tasks || !req.query.student_info || !req.query.years) {
-    res.send(400, "nah chief this ain't it")
+    res.status(400).send("nah chief this ain't it")
   }
   const username = req.query.username;
   const password = req.query.password;
@@ -204,6 +208,7 @@ app.get("/puppeteer", async (req, res) => {
   const browser = await login(username, password);
   if (learning_tasks) {
       response.learning_tasks = await getLearningTasksData(browser, years)
+      console.log("learning tasks collected")
   }
   if (student_info) {
     response.student_info = await getStudentInfoData(browser);
@@ -437,7 +442,7 @@ app.get("/puppeteer", async (req, res) => {
   //res.json(response);
   //await browser.close();
   app.get('*', (req, res) => {
-    res.status(400).send("nah")
+    res.status(400).send("nah chief this ain't it")
   });
   app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
