@@ -70,7 +70,7 @@ const getStudentInfoData = async (browser) => {
   }
   return data;
 }
-const getLearningTasksData = async (browser, years) => {
+const getLearningTasksData = async (browser, year) => {
   const data = {};
   let total_requests = 0;
   let id = 0;
@@ -133,7 +133,7 @@ const getLearningTasksData = async (browser, years) => {
                     }
                   }
                   
-                  data[years[total_years - 1]].push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
+                  data[year].push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
                   id++; 
               }
               console.log("response awaited")
@@ -161,30 +161,22 @@ const getLearningTasksData = async (browser, years) => {
   console.log("clicking 500 button")
   await sleep(1000);
 
-  
-  for (total_years = 0; total_years < years.length; total_years++) {
-      while (total_tasks_requests !== total_years) {
-          console.log("waiting for data");
-          await sleep(1000)
+  await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
+  console.log("clicking year button")
+  data[year] = [];
+  await page.evaluate(year => {
+      list = document.querySelectorAll(".x-boundlist-item");
+      for (i = 0; i < list.length; i++) {
+          if (list[i].innerText == `${year} Academic`) {
+              console.log(`found item - ${year} Academic`);
+              list[i].unselectable = false; 
+              list[i].click();
+              console.log(`clicked item - ${year} Academic`)
+          }   
       }
-      await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
-      console.log("clicking year button")
-      let year = years[total_years];
-      data[year] = [];
-      await page.evaluate(year => {
-          list = document.querySelectorAll(".x-boundlist-item");
-          for (i = 0; i < list.length; i++) {
-              if (list[i].innerText == `${year} Academic`) {
-                  console.log(`found item - ${year} Academic`);
-                  list[i].unselectable = false; 
-                  list[i].click();
-                  console.log(`clicked item - ${year} Academic`)
-              }   
-          }
-      }, year)
-  }
-  while (total_tasks_requests !== total_years) {
-      console.log("waiting for last data")
+  }, year)
+  while (total_tasks_requests !== 1) {
+      console.log("waiting for data")
       await sleep(1000);
   }
   return data;
@@ -194,22 +186,24 @@ app.get("/api", (req, res) => {
   });
 
 app.get("/puppeteer", async (req, res) => {
-  if (!req.query.username || !req.query.password || !req.query.learning_tasks || !req.query.student_info || !req.query.years) {
+  if (!req.query.username || !req.query.password || !req.query.learning_tasks || !req.query.student_info || !req.query.year) {
     res.status(400).send("nah chief this ain't it")
+    return
   }
   const username = req.query.username;
   const password = req.query.password;
   const student_info = req.query.student_info;
-  const years = JSON.parse(req.query.years);
+  const year = req.query.year
   const learning_tasks = req.query.learning_tasks;
   const response = {};
   const browser = await login(username, password);
-  if (learning_tasks) {
-      response.learning_tasks = await getLearningTasksData(browser, years)
-      console.log("learning tasks collected")
+  if (learning_tasks === "true") {
+      response.learning_tasks = await getLearningTasksData(browser, year)
+      console.log("learning tasks collected");
   }
-  if (student_info) {
+  if (student_info === "true") {
     response.student_info = await getStudentInfoData(browser);
+    console.log("student info collected");
   }
   res.json(response)
   await browser.close();
