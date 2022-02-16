@@ -34,7 +34,7 @@ const login = async (username, password) => {
     el.disabled = false;
     el.click();
   });
-  await page.waitForSelector(".ext-cal-day-col-gutter");
+  await page.waitForSelector(".x-container.x-container-default.x-box-layout-ct.home-twoColumnContainer.x-border-box");
   console.log("page loaded")
   return browser;
 }
@@ -186,22 +186,24 @@ app.get("/api", (req, res) => {
   });
 
 app.get("/puppeteer", async (req, res) => {
-  if (!req.query.username || !req.query.password || !req.query.learning_tasks || !req.query.student_info || !req.query.year) {
+  if (!req.query.username || !req.query.password ) {
     res.status(400).send("nah chief this ain't it")
     return
   }
+  const response = {};
   const username = req.query.username;
   const password = req.query.password;
-  const student_info = req.query.student_info;
-  const year = req.query.year
-  const learning_tasks = req.query.learning_tasks;
-  const response = {};
   const browser = await login(username, password);
-  if (learning_tasks === "true") {
-      response.learning_tasks = await getLearningTasksData(browser, year)
+  if (req.query.learning_tasks) {
+    if (req.query.years) {
+      response.learning_tasks = await getLearningTasksData(browser, req.query.year)
       console.log("learning tasks collected");
+    } else {
+      res.status(400).send("nah chief this ain't it")
+      return
+    }
   }
-  if (student_info === "true") {
+  if (req.query.student_info) {
     response.student_info = await getStudentInfoData(browser);
     console.log("student info collected");
   }
