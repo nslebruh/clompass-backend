@@ -199,6 +199,7 @@ app.get("/puppeteer", async (req, res) => {
   if (req.query.learning_tasks === "true") {
     response.learning_tasks = []
     if (req.query.year !== null || undefined) {
+      const year = req.query.year;
       const data = {};
       let total_requests = 0;
       let id = 0;
