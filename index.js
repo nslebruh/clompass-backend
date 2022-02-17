@@ -192,8 +192,7 @@ app.get("/puppeteer", async (req, res) => {
     el.disabled = false;
     el.click();
   });
-
-  await page.waitForNavigation({waitUntil: "load", timeout: 0});
+  await page.waitForResponse("https://lilydaleheights-vic.compass.education/")
   console.log("page loaded")
 
   if (req.query.learning_tasks === "true") {
@@ -311,6 +310,7 @@ app.get("/puppeteer", async (req, res) => {
   }
   res.json(response)
   await browser.close();
+  console.log("browser has been closed");
 })
 
   app.get('*', (req, res) => {
