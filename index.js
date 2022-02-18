@@ -83,7 +83,6 @@ app.get("/puppeteer", async (req, res) => {
   });
   try {
     await page.waitForSelector("#c_bar")
-    //await page.waitForResponse("https://lilydaleheights-vic.compass.education/")
     console.log("page loaded")
   } catch (error) {
     console.error(error);
@@ -98,6 +97,7 @@ app.get("/puppeteer", async (req, res) => {
     response.learning_tasks = []
     if (req.query.year !== null || undefined) {
       const year = req.query.year;
+      console.log(year)
       const data = {};
       let total_requests = 0;
       let id = 0;
@@ -168,7 +168,10 @@ app.get("/puppeteer", async (req, res) => {
           }
       })
       await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks");
-      await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
+      while (total_requests !== 1) {
+        await sleep(250)
+        console.log("waiting for first request")
+      };
       console.log("page loaded")
       console.log("collecting learning tasks information");
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
@@ -179,11 +182,15 @@ app.get("/puppeteer", async (req, res) => {
               if (list[i].innerText == "500") {
                   list[i].unselectable = false; 
                   list[i].click();
+                  console.log("clicked 500 button")
               }
           }
       })
       console.log("clicking 500 button")
-      await sleep(1000);
+      while (total_requests !== 2) {
+        await sleep(250);
+        console.log("waiting for second request")
+      }
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
       console.log("clicking year button")
       data[year] = [];
@@ -199,7 +206,7 @@ app.get("/puppeteer", async (req, res) => {
           }
       }, year)
       while (total_tasks_requests !== 1) {
-          console.log("waiting for data")
+          console.log("waiting for third request")
           await sleep(1000);
       }
       response.learning_tasks = data;
