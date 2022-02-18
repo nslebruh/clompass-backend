@@ -195,11 +195,12 @@ app.get("/puppeteer", async (req, res) => {
       await sleep(1000)
       console.log("clicking year button")
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
-      await page.$$eval("x-form-item-body x-form-trigger-wrap-focus x-pickerfield-open", el => console.log(el))
+      page.$eval(".x-boundlist-item", el => console.log(el.length))
       data[year] = [];
       await page.evaluate(year => {
         console.log("evaluating page")
           list = document.querySelectorAll(".x-boundlist-item");
+          console.log(list.length)
           console.log("selected element")
           console.log(year)
           for (i = 0; i < list.length; i++) {
