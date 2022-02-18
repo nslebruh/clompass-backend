@@ -48,117 +48,6 @@ const getStudentInfoData = async (browser) => {
   }
   return data;
 }
-const getLearningTasksData = async (browser, year) => {
-  const data = {};
-  let total_requests = 0;
-  let id = 0;
-  let total_tasks_requests = 0;
-
-  let page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
-
-  page.on("request", async (request) => {
-    await request.continue();
-  });
-  page.on("requestfinished", async (request) => {
-      if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
-        console.log("request finished")
-        console.log(total_requests)
-          total_requests++;
-          if (total_requests > 2) {
-              let responsebody = await request.response().json();
-              responsebody = responsebody.d.data;
-              for (let i = 0; i < responsebody.length; i++) {
-                  let task = responsebody[i];
-                  let name = task.name;
-                  let subject_name = task.subjectName;
-                  let subject_code = task.activityName;
-                  let attachments = [];
-                  let submissions = [];
-                  let description = task.description;
-                  let official_due_date = task.dueDateTimestamp;
-                  let individual_due_date = task.students[0].dueDateTimestamp;
-                  individual_due_date ? individual_due_date = individual_due_date : individual_due_date = official_due_date;
-                  let submission_status;
-                  let submission_svg_link;
-                  if (task.students[0].submissionStatus === 1) {
-                      submission_status = "Pending";
-                      submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/pending.svg";
-                    } else if (task.students[0].submissionStatus === 2) {
-                      submission_status = "Overdue";
-                      submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/overdue.svg";
-                    } else if (task.students[0].submissionStatus === 3) {
-                      submission_status = "On time";
-                      submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/ontime.svg"
-                    } else if (task.students[0].submissionStatus === 4) {
-                      submission_status = "Recieved late";
-                      submission_svg_link = "https://cdn.jsdelivr.net/gh/clompass/clompass@main/public/svg/task-status/receivedlate.svg";
-                    } else {
-                      submission_status = "Unknown"
-                    }
-                  if (task.attachments != null) {
-                      for (let j = 0; j < task.attachments.length; j++) {
-                          attachments.push({attachment_name: task.attachments[j].name, attachment_link: "https://lilydaleheights-vic.compass.education/Services/FileAssets.svc/DownloadFile?id=" + task.attachments[j].id + "&originalFileName=" + task.attachments[j].fileName.replace(/ /g, "%20"),});
-                      }
-                    } else {
-                      attachments = "None";
-                    }
-                
-                  if (task.students[0].submissions != null) {
-                    for (let j = 0; j < task.students[0].submissions.length; j++) {
-                          submissions.push({submission_name: task.students[0].submissions[j].fileName, submission_link: "https://lilydaleheights-vic.compass.education/Services/FileDownload/FileRequestHandler?FileDownloadType=2&taskId=" + task.students[0].taskId + "&submissionId=" + task.students[0].submissions[j].id});
-                    }
-                  }
-                  
-                  data[year].push({name: name, subject_name: subject_name, subject_code: subject_code, attachments: attachments, description: description, official_due_date: official_due_date, individual_due_date: individual_due_date, submission_status: submission_status, submissions: submissions, submission_svg_link: submission_svg_link, id: id});
-                  id++; 
-              }
-              console.log("response awaited")
-              total_tasks_requests++
-              
-          }
-      }
-  })
-
-  await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks", {waitUntil: "load", timeout: 0});
-  //await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
-  console.log("page loaded")
-  console.log("collecting learning tasks information");
-  await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
-  await page.waitForSelector(".x-boundlist-item");
-  await page.evaluate(() => {
-      list = document.querySelectorAll(".x-boundlist-item");
-      for (i = 0; i < list.length; i++) {
-          if (list[i].innerText == "500") {
-              list[i].unselectable = false; 
-              list[i].click();
-          }
-      }
-  })
-  console.log("clicking 500 button")
-  await sleep(1000);
-
-  await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
-  console.log("clicking year button")
-  data[year] = [];
-  await page.evaluate(year => {
-      list = document.querySelectorAll(".x-boundlist-item");
-      for (i = 0; i < list.length; i++) {
-          if (list[i].innerText == `${year} Academic`) {
-              console.log(`found item - ${year} Academic`);
-              list[i].unselectable = false; 
-              list[i].click();
-              console.log(`clicked item - ${year} Academic`)
-          }   
-      }
-  }, year)
-  while (total_tasks_requests !== 1) {
-      console.log("waiting for data")
-      await sleep(1000);
-  }
-  return data;
-}
 app.get("/api", (req, res) => {
     res.json({ message: "Hello from server!" });
   });
@@ -172,7 +61,7 @@ app.get("/puppeteer", async (req, res) => {
   const username = req.query.username;
   const password = req.query.password;
 
-  const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   let page = await browser.newPage(); 
   await page.goto('https://lilydaleheights-vic.compass.education/', {waitUntil: "load", timeout: 0});
   await page.waitForSelector("#username", timeout=2000);
@@ -192,8 +81,18 @@ app.get("/puppeteer", async (req, res) => {
     el.disabled = false;
     el.click();
   });
-  await page.waitForResponse("https://lilydaleheights-vic.compass.education/")
-  console.log("page loaded")
+  try {
+    await page.waitForSelector("#c_bar")
+    //await page.waitForResponse("https://lilydaleheights-vic.compass.education/")
+    console.log("page loaded")
+  } catch (error) {
+    console.error(error);
+    await browser.close();
+    res.status(500).send("could not navigate to https://lilydaleheights-vic.compass.education/");
+    return
+    
+  }
+  
 
   if (req.query.learning_tasks === "true") {
     response.learning_tasks = []
@@ -268,8 +167,8 @@ app.get("/puppeteer", async (req, res) => {
               }
           }
       })
-      await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks", {waitUntil: "load", timeout: 0});
-      //await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
+      await page.goto("https://lilydaleheights-vic.compass.education/Records/User.aspx#learningTasks");
+      await page.waitForSelector('.x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first');
       console.log("page loaded")
       console.log("collecting learning tasks information");
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
