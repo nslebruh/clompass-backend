@@ -193,8 +193,9 @@ app.get("/puppeteer", async (req, res) => {
         console.log("waiting for second request")
       }
       await sleep(1000)
-      await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
       console.log("clicking year button")
+      await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
+      await page.$$eval("x-form-item-body x-form-trigger-wrap-focus x-pickerfield-open", el => console.log(el))
       data[year] = [];
       await page.evaluate(year => {
         console.log("evaluating page")
