@@ -61,7 +61,7 @@ app.get("/puppeteer", async (req, res) => {
   const username = req.query.username;
   const password = req.query.password;
 
-  const browser = await puppeteer.launch({headless: false, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
+  const browser = await puppeteer.launch({headless: true, "args" : ["--no-sandbox", "--disable-setuid-sandbox"]})
   let page = await browser.newPage(); 
   await page.goto('https://lilydaleheights-vic.compass.education/', {waitUntil: "load", timeout: 0});
   await page.waitForSelector("#username", timeout=2000);
