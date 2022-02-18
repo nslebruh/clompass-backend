@@ -114,7 +114,8 @@ app.get("/puppeteer", async (req, res) => {
           if (request.url().includes("https://lilydaleheights-vic.compass.education/Services/LearningTasks.svc/GetAllLearningTasksByUserId")) {
             console.log("request finished")
             console.log(total_requests)
-              total_requests++;
+            console.log("what is happening?")
+            total_requests++;
               if (total_requests > 2) {
                   let responsebody = await request.response().json();
                   responsebody = responsebody.d.data;
@@ -191,14 +192,12 @@ app.get("/puppeteer", async (req, res) => {
         await sleep(250);
         console.log("waiting for second request")
       }
-      await sleep(500)
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
       console.log("clicking year button")
       data[year] = [];
       await page.evaluate(year => {
           list = document.querySelectorAll(".x-boundlist-item");
           for (i = 0; i < list.length; i++) {
-            console.log(year);
               if (list[i].innerText == `${year} Academic`) {
                   console.log(`found item - ${year} Academic`);
                   list[i].unselectable = false; 
