@@ -196,7 +196,9 @@ app.get("/puppeteer", async (req, res) => {
       console.log("clicking year button")
       data[year] = [];
       await page.evaluate(year => {
+        console.log("evaluating page")
           list = document.querySelectorAll(".x-boundlist-item");
+          console.log("selected element")
           for (i = 0; i < list.length; i++) {
               if (list[i].innerText == `${year} Academic`) {
                   console.log(`found item - ${year} Academic`);
