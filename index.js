@@ -174,6 +174,7 @@ app.get("/puppeteer", async (req, res) => {
         console.log("waiting for first request")
       };
       console.log("page loaded")
+      page.$eval(".x-boundlist-item", el => console.log(el.length))
       console.log("collecting learning tasks information");
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[1].click())
       await page.waitForSelector(".x-boundlist-item");
@@ -188,12 +189,14 @@ app.get("/puppeteer", async (req, res) => {
           }
       })
       console.log("clicking 500 button")
+      page.$eval(".x-boundlist-item", el => console.log(el.length))
       while (total_requests !== 2) {
         await sleep(250);
         console.log("waiting for second request")
       }
       await sleep(1000)
       console.log("clicking year button")
+      page.$eval(".x-boundlist-item", el => console.log(el.length))
       await page.$$eval(".x-trigger-index-0.x-form-trigger.x-form-arrow-trigger.x-form-trigger-first", el => el[0].click())
       page.$eval(".x-boundlist-item", el => console.log(el.length))
       data[year] = [];
